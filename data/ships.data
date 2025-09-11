@@ -1,0 +1,3 @@
+# pour chaque niveau : bullet_name size damage xpos ypos xspeed yspeed
+fighter1:
+    bullet10 1 1 15 -15 7 0
