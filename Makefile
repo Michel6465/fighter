@@ -4,6 +4,8 @@ CC = gcc
 # Compiler flags
 CFLAGS = -Wall -g
 LIBS = -lm
+DEPFLAGS = -MMD -MP
+CFLAGS += $(DEPFLAGS)
 
 # SDL2 flags
 SDL2_CFLAGS = $(shell sdl2-config --cflags)
@@ -11,12 +13,9 @@ SDL2_LDFLAGS = $(shell sdl2-config --libs) -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 
 # Target executable
 TARGET = a.out
-
-# Source files
 SRCS = $(wildcard *.c)
-
-# Object files
 OBJS = $(SRCS:.c=.o)
+DEP = $(SRCS:.c=.d)
 
 # Default target
 all: $(TARGET)
@@ -28,6 +27,8 @@ $(TARGET): $(OBJS)
 # Compile source files into object files
 %.o: %.c
 	$(CC) $(CFLAGS) $(SDL2_CFLAGS) -c $< -o $@
+
+-include $(DEP)
 
 start:
 	./$(TARGET)
