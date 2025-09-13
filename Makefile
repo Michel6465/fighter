@@ -2,7 +2,7 @@
 CC = gcc
 
 # Compiler flags
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -pedantic -Wextra
 LIBS = -lm
 DEPFLAGS = -MMD -MP
 CFLAGS += $(DEPFLAGS)

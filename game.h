@@ -6,6 +6,7 @@
 #include "init.h"
 
 #define ANGLES_PER_FRAME 5
+#define SPEED_MULTIPLICATOR 0.00008
 
 enum {TURN_LEFT, TURN_RIGHT, THRUST, DO_NOTHING};
 
@@ -29,11 +30,15 @@ typedef struct {
 } Game;
 
 // Function declarations
-void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources);
-void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui);
+void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources, int* quit);
+void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, BackgroundEffects* bg_effects);
 int addBullets(SDL_Rect* bullets, SDL_Rect spaceshipRect, int numBullets, int shipLevel);
 int getShortestRotationDirection(Fighter* fighter);
 float getFighterMovementDirection(Fighter* fighter);
 float getFighterMovementSpeed(Fighter* fighter);
+void updateSolarSystem(BackgroundEffects* bg_effects);
+void updateThruster(ThrusterState* thruster, int is_thrusting);
+void limitFighterSpeed(Fighter* fighter, float max_speed);
+void calculateGravityForces(Fighter* fighter, BackgroundEffects* bg_effects, GameResources* resources);
 
 #endif

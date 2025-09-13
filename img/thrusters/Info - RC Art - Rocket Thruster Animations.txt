@@ -1,0 +1,21 @@
+Reactorcore Art (RC Art)
+==
+PACK: Rocket Thruster Animations
+
+--
+
+Pixel-art sprites pack depicting animation frames for thruster exhaust flames of jetplanes, rocket engines and hover propulsion.
+
+The package offers both sheets and individual images. Both are PNGs with a transparent background.
+
+--
+
+CC0, you can use these assets however you want, including commercial projects.
+
+--
+
+You can use Alferd Spritesheet Unpacker to quickly split the large atlas image into seperate individual images.
+https://github.com/ForkandBeard/Alferd-Spritesheet-Unpacker
+
+The animation spritesheets can be cut quickly into individual images with Sprite Sheet Slicer:
+https://isometric8.itch.io/sprite-sheet-slicer

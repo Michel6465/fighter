@@ -66,13 +66,6 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     SDL_FreeSurface(checkboxUncheckedSurface);
     checkInit(!resources->checkboxCheckedTexture || !resources->checkboxUncheckedTexture, "Failed to create checkbox textures");
 
-    // Load luna image
-    SDL_Surface* lunaSurface = IMG_Load("img/luna.png");
-    checkInit(!lunaSurface, "Failed to load luna image");
-    resources->lunaTexture = SDL_CreateTextureFromSurface(renderer, lunaSurface);
-    SDL_FreeSurface(lunaSurface);
-    checkInit(!resources->lunaTexture, "Failed to create luna texture");
-
     // Load fighter image
     SDL_Surface* fighterSurface = IMG_Load("img/topdownfighter.png");
     checkInit(!fighterSurface, "Failed to load fighter image");
@@ -81,7 +74,7 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     checkInit(!resources->fighterTexture, "Failed to create fighter texture");
 
     // Load pause button
-    SDL_Surface* pauseSurface = IMG_Load("img/menus/pause.png");
+    SDL_Surface* pauseSurface = IMG_Load("img/menus/pause2.png");
     checkInit(!pauseSurface, "Failed to load pause button image");
     resources->pauseTexture = SDL_CreateTextureFromSurface(renderer, pauseSurface);
     SDL_FreeSurface(pauseSurface);
@@ -93,6 +86,81 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     resources->bulletTexture = SDL_CreateTextureFromSurface(renderer, bulletSurface);
     SDL_FreeSurface(bulletSurface);
     checkInit(!resources->bulletTexture, "Failed to create bullet texture");
+
+    // Load thruster textures
+    const int numberImages = 4;
+    const char* thrusterPaths[] = {
+        "img/thrusters/all/20 Thruster.png",
+        "img/thrusters/all/19 Thruster.png", 
+        "img/thrusters/all/18 Thruster.png",
+        "img/thrusters/all/19 Thruster.png"
+    };
+    
+    for (int i = 0; i < numberImages; i++) {
+        SDL_Surface* thrusterSurface = IMG_Load(thrusterPaths[i]);
+        if (!thrusterSurface) {
+            printf("Warning: Failed to load thruster image %s\n", thrusterPaths[i]);
+            // Create a placeholder texture
+            thrusterSurface = SDL_CreateRGBSurface(0, 20, 20, 32, 0, 0, 0, 0);
+            SDL_FillRect(thrusterSurface, NULL, SDL_MapRGB(thrusterSurface->format, 255, 100, 0));
+        }
+        resources->thrusterTextures[i] = SDL_CreateTextureFromSurface(renderer, thrusterSurface);
+        SDL_FreeSurface(thrusterSurface);
+        checkInit(!resources->thrusterTextures[i], "Failed to create thruster texture");
+    }
+
+    // Load star textures
+    const char* starPaths[4] = {
+        "img/stars/star1.png", "img/stars/star2.png", "img/stars/star4.png", "img/stars/star5.png"
+    };
+    
+    resources->num_star_textures = 4;
+    
+    for (int i = 0; i < resources->num_star_textures; i++) {
+        SDL_Surface* starSurface = IMG_Load(starPaths[i]);
+        if (!starSurface) {
+            printf("Warning: Failed to load star image %s\n", starPaths[i]);
+            // Create a placeholder star
+            starSurface = SDL_CreateRGBSurface(0, 16, 16, 32, 0, 0, 0, 0);
+            SDL_FillRect(starSurface, NULL, SDL_MapRGBA(starSurface->format, 255, 255, 255, 255));
+            // Draw a simple star shape
+            SDL_Rect center = {6, 6, 4, 4};
+            SDL_FillRect(starSurface, &center, SDL_MapRGBA(starSurface->format, 200, 200, 100, 255));
+        }
+        resources->starTextures[i] = SDL_CreateTextureFromSurface(renderer, starSurface);
+        SDL_SetTextureBlendMode(resources->starTextures[i], SDL_BLENDMODE_BLEND);
+        SDL_FreeSurface(starSurface);
+        checkInit(!resources->starTextures[i], "Failed to create star texture");
+    }
+
+    // Load planet textures
+    const char* planetPaths[NUM_PLANETS] = {
+        "img/solar_system/red_sun.png",      // 0 - Sun
+        "img/solar_system/mercury.png",  // 1 - Mercury
+        "img/solar_system/venus.png",    // 2 - Venus
+        "img/solar_system/earth.png",    // 3 - Earth
+        "img/solar_system/mars.png",     // 4 - Mars
+        "img/solar_system/jupiter.png",  // 5 - Jupiter
+        "img/solar_system/saturn.png",   // 6 - Saturn
+        "img/solar_system/uranus.png",   // 7 - Uranus
+        "img/solar_system/neptune.png"   // 8 - Neptune
+    };
+    
+    for (int i = 0; i < NUM_PLANETS; i++) {
+        SDL_Surface* planetSurface = IMG_Load(planetPaths[i]);
+        if (!planetSurface) {
+            printf("Warning: Failed to load planet image %s\n", planetPaths[i]);
+            // Create placeholder
+            planetSurface = SDL_CreateRGBSurface(0, 64, 64, 32, 0, 0, 0, 0);
+            SDL_Color colors[] = {{255, 200, 100}, {200, 150, 100}, {150, 150, 200}};
+            SDL_FillRect(planetSurface, NULL, SDL_MapRGB(planetSurface->format, 
+                colors[i % 3].r, colors[i % 3].g, colors[i % 3].b));
+        }
+        resources->planetTextures[i] = SDL_CreateTextureFromSurface(renderer, planetSurface);
+        SDL_SetTextureBlendMode(resources->planetTextures[i], SDL_BLENDMODE_BLEND);
+        SDL_FreeSurface(planetSurface);
+        checkInit(!resources->planetTextures[i], "Failed to create planet texture");
+    }
 
     // Load music
     resources->music = Mix_LoadMUS("music/pinball-theme.mp3");
@@ -106,8 +174,6 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     // Initialize background position
     resources->bg_x = 0;
     resources->bg_y = 0;
-
-    printf("%d %d %d\n", FIGHTER_WIDTH, FIGHTER_HEIGHT, FIGHTER_SPEED);
 }
 
 void initUIElements(UIElements* ui) {
@@ -140,10 +206,75 @@ void initFighter(Fighter* fighter) {
     fighter->y = SCREEN_HEIGHT / 2 - FIGHTER_HEIGHT / 2;
     fighter->angle = 0;
     fighter->rect = (SDL_Rect){ fighter->x, fighter->y, FIGHTER_WIDTH, FIGHTER_HEIGHT };
+
+    // Initialize thruster state for dual thrusters
+    fighter->thruster.current_frame = 0;
+    fighter->thruster.is_visible = 0;
+    fighter->thruster.last_update = 0;
+    fighter->thruster.animation_speed = 100; // ms per frame
+    
+    // Position offsets for dual thrusters
+    fighter->thruster.spread_distance = 6; // Distance from center
+    fighter->thruster.left_offset.x = -fighter->thruster.spread_distance; // Left side
+    fighter->thruster.left_offset.y = FIGHTER_HEIGHT / 2 + 5; // Below ship
+    fighter->thruster.right_offset.x = fighter->thruster.spread_distance; // Right side
+    fighter->thruster.right_offset.y = FIGHTER_HEIGHT / 2 + 5; // Below ship
+}
+
+void initSolarSystem(BackgroundEffects* bg_effects) {
+    // Realistic relative distances and speeds (scaled for gameplay)
+    PlanetDefinition planet_defs[NUM_PLANETS] = {
+        // Sun (stationary at center)
+        {"Sun",      0.0f,      0.0f,  40.0f,   3762,  27.4},  // radius, angle, speed, width, gravity
+        
+        // Planets with increasing distance and decreasing speed
+        {"Mercury",  3200.0f,   0.0f,  17.7f,   392,   3.7},
+        {"Venus",    4800.0f,   1.2f,  12.98f,  564,   8.87},
+        {"Earth",    6400.0f,   2.4f,  11.04f,  576,   9.81},
+        {"Mars",     8000.0f,   3.1f,  8.93f,   447,   3.73},
+        {"Jupiter",  11200.0f,  4.5f,  8.9f,    1500,  24.79}, // rings
+        {"Saturn",   14400.0f,  5.8f,  3.6f,    2788,  10.44},
+        {"Uranus",   17600.0f,  0.7f,  2.53f,   2000,  8.69}, // rings
+        {"Neptune",  20800.0f,  1.9f,  2.0f,    988,   11.15}
+    };
+    printf("%f\n", planet_defs[0].gravity);
+    
+    for (int i = 0; i < NUM_PLANETS; i++) {
+        bg_effects->planets[i].orbit_radius = planet_defs[i].orbit_radius;
+        bg_effects->planets[i].orbit_angle = planet_defs[i].start_angle;
+        bg_effects->planets[i].orbit_speed = planet_defs[i].orbit_speed;
+        bg_effects->planets[i].width = planet_defs[i].width;
+        bg_effects->planets[i].mass = planet_defs[i].gravity;
+        bg_effects->planets[i].texture_index = i;
+        strncpy(bg_effects->planets[i].name, planet_defs[i].name, 19);
+        bg_effects->planets[i].name[19] = '\0';
+    }
+    
+    printf("Solar system initialized with %d planets\n", NUM_PLANETS);
+}
+
+void generateStarfield(BackgroundEffects* bg_effects) {
+    bg_effects->num_stars = MAX_STARS;
+    
+    for (int i = 0; i < bg_effects->num_stars; i++) {
+        // Random position within 10k radius circle
+        float angle = (rand() % 360) * M_PI / 180.0f;
+        float distance = (rand() % STARFIELD_RADIUS);
+        
+        bg_effects->stars[i].position.x = cos(angle) * distance;
+        bg_effects->stars[i].position.y = sin(angle) * distance;
+        
+        // Random properties
+        bg_effects->stars[i].texture_index = rand() % 10;
+        bg_effects->stars[i].scale = 0.3f + (rand() % 70) / 100.0f;  // 0.3 - 1.0
+        bg_effects->stars[i].rotation = rand() % 360;
+        bg_effects->stars[i].brightness = 0.5f + (rand() % 50) / 100.0f;  // 0.5 - 1.0
+    }
+    
+    printf("Generated %d stars in %d px radius\n", MAX_STARS, STARFIELD_RADIUS);
 }
 
 void cleanupResources(GameResources* resources) {
-    if (resources->lunaTexture) SDL_DestroyTexture(resources->lunaTexture);
     if (resources->pauseTexture) SDL_DestroyTexture(resources->pauseTexture);
     if (resources->checkboxCheckedTexture) SDL_DestroyTexture(resources->checkboxCheckedTexture);
     if (resources->checkboxUncheckedTexture) SDL_DestroyTexture(resources->checkboxUncheckedTexture);

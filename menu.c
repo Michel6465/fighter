@@ -33,13 +33,17 @@ int main(int argc, char* args[]) {
         .numBullets = 0,
         .keyState = SDL_GetKeyboardState(NULL)
     };
+
+    BackgroundEffects bg_effects;
+    generateStarfield(&bg_effects);
+    initSolarSystem(&bg_effects);
     
     // Main loop flag
     int quit = 0;
     Uint32 frameStart;
     int frameTime;
+    int deltaTime;
     SDL_Event e;
-    float rad_angle;
 
     // Get keyboard state
     const Uint8 *keyState = SDL_GetKeyboardState(NULL);
@@ -112,13 +116,13 @@ int main(int argc, char* args[]) {
         SDL_PumpEvents();
 
         // Handle keyboard input
-        handleKeyboardInput(&game, &fighter, &resources);
+        handleKeyboardInput(&game, &fighter, &resources, &quit);
 
         // Update game state
-        updateGameState(&game, &fighter, &resources, &ui);
+        updateGameState(&game, &fighter, &resources, &ui, &bg_effects);
 
         // Render game
-        renderGameScreen(renderer, &game, &fighter, &resources, &ui);
+        renderGameScreen(renderer, &game, &fighter, &resources, &ui, &bg_effects);
 
         // Frame rate limiting
         frameTime = SDL_GetTicks() - frameStart;
