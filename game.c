@@ -1,9 +1,144 @@
 #include "game.h"
 #include "init.h"  // For GameResources
+#include "sounds.h"
 #include <math.h>
 #include <stdio.h>
+#include <SDL2/SDL_mixer.h>
+
+void handleMouseInput(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, SDL_Event e, int* quit) {
+    int x, y;
+
+    // User requests quit
+    if (e.type == SDL_QUIT) {
+        *quit = 1;
+    } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        SDL_GetMouseState(&x, &y);
+
+        // Check if the mouse click is within the buttons
+        if (game->screen == MAIN_MENU) {
+            if (x >= ui->startButtonRect.x && x <= (ui->startButtonRect.x + ui->startButtonRect.w) &&
+                y >= ui->startButtonRect.y && y <= (ui->startButtonRect.y + ui->startButtonRect.h)) {
+                printf("Start button clicked!\n");
+                game->screen = GAME;
+            }
+            else if (x >= ui->optionsButtonRect.x && x <= (ui->optionsButtonRect.x + ui->optionsButtonRect.w) &&
+                    y >= ui->optionsButtonRect.y && y <= (ui->optionsButtonRect.y + ui->optionsButtonRect.h)) {
+                printf("Options button clicked!\n");
+                game->screen = OPTIONS;
+            }
+            else if (x >= ui->quitButtonRect.x && x <= (ui->quitButtonRect.x + ui->quitButtonRect.w) &&
+                    y >= ui->quitButtonRect.y && y <= (ui->quitButtonRect.y + ui->quitButtonRect.h)) {
+                printf("Quit button clicked!\n");
+                *quit = 1; // Quit the application
+            }
+        } else if (game->screen == OPTIONS) {
+            // Check if checkboxes are clicked
+            if (x >= ui->checkbox1Rect.x && x <= (ui->checkbox1Rect.x + ui->checkbox1Rect.w) &&
+                y >= ui->checkbox1Rect.y && y <= (ui->checkbox1Rect.y + ui->checkbox1Rect.h)) {
+                if (Mix_PlayingMusic()) {
+                    if (!game->isSound) Mix_ResumeMusic();
+                    else                Mix_PauseMusic();
+                }
+                game->isSound = !game->isSound;
+            }
+            if (x >= ui->checkbox2Rect.x && x <= (ui->checkbox2Rect.x + ui->checkbox2Rect.w) &&
+                y >= ui->checkbox2Rect.y && y <= (ui->checkbox2Rect.y + ui->checkbox2Rect.h)) {
+                game->isHard = !game->isHard;
+            }
+            // Check if the back button is clicked
+            if (x >= ui->backButtonRect.x && x <= (ui->backButtonRect.x + ui->backButtonRect.w) &&
+                y >= ui->backButtonRect.y && y <= (ui->backButtonRect.y + ui->backButtonRect.h)) {
+                printf("Back button clicked!\n");
+                game->screen = MAIN_MENU;
+            }
+
+            // Check if music slider was clicked
+            if (x >= ui->musicSliderRect.x && x <= ui->musicSliderRect.x + ui->musicSliderRect.w &&
+                y >= ui->musicSliderRect.y && y <= ui->musicSliderRect.y + ui->musicSliderRect.h) {
+                
+                float newVolume = (float)(x - ui->musicSliderRect.x) / ui->musicSliderRect.w;
+                setMusicVolume(resources, newVolume);
+                
+                // Update knob position
+                ui->musicSliderKnob.x = ui->musicSliderRect.x + (ui->musicSliderRect.w * newVolume);
+                ui->draggingMusic = 1;
+            }
+            
+            // Check if SFX slider was clicked
+            if (x >= ui->sfxSliderRect.x && x <= ui->sfxSliderRect.x + ui->sfxSliderRect.w &&
+                y >= ui->sfxSliderRect.y && y <= ui->sfxSliderRect.y + ui->sfxSliderRect.h) {
+                
+                float newVolume = (float)(x - ui->sfxSliderRect.x) / ui->sfxSliderRect.w;
+                setSoundEffectsVolume(resources, newVolume);
+                
+                // Update knob position
+                ui->sfxSliderKnob.x = ui->sfxSliderRect.x + (ui->sfxSliderRect.w * newVolume);
+                ui->draggingSfx = 1;
+            }
+        } else if (game->screen == GAME) {
+            // Check if the pause button is clicked
+            if (x >= ui->pauseButtonRect.x && x <= (ui->pauseButtonRect.x + ui->pauseButtonRect.w) &&
+                y >= ui->pauseButtonRect.y && y <= (ui->pauseButtonRect.y + ui->pauseButtonRect.h)) {
+                printf("Pause button clicked!\n");
+                game->screen = MAIN_MENU;
+            } else {
+                //numBullets = addBullets(bullets, fighter.rect, numBullets, shipLevel);
+            }
+        }
+    } else if (e.type == SDL_MOUSEBUTTONUP) {
+        SDL_GetMouseState(&x, &y);
+        if (ui->draggingMusic) {
+            float newVolume = (float)(x - ui->musicSliderRect.x) / ui->musicSliderRect.w;
+            setMusicVolume(resources, newVolume);
+            
+            // Update knob position
+            ui->musicSliderKnob.x = ui->musicSliderRect.x + max(min((ui->musicSliderRect.w * newVolume), ui->musicSliderRect.w), 0);
+            ui->draggingMusic = 1;
+            ui->draggingMusic = 0;
+        }
+
+        if (ui->draggingSfx) {
+            float newVolume = (float)(x - ui->sfxSliderRect.x) / ui->sfxSliderRect.w;
+            setSoundEffectsVolume(resources, newVolume);
+            
+            // Update knob position
+            ui->sfxSliderKnob.x = ui->sfxSliderRect.x + max(min((ui->sfxSliderRect.w * newVolume), ui->sfxSliderRect.w), 0);
+            ui->draggingSfx = 0;
+        }
+    } else if (e.type == SDL_MOUSEMOTION) {
+        SDL_GetMouseState(&x, &y);
+        if (ui->draggingMusic) {
+            float newVolume = (float)(x - ui->musicSliderRect.x) / ui->musicSliderRect.w;
+            newVolume = newVolume < 0.0f ? 0.0f : newVolume > 1.0f ? 1.0f : newVolume;
+            setMusicVolume(resources, newVolume);
+            ui->musicSliderKnob.x = ui->musicSliderRect.x + (ui->musicSliderRect.w * newVolume);
+        }
+        
+        if (ui->draggingSfx) {
+            float newVolume = (float)(x - ui->sfxSliderRect.x) / ui->sfxSliderRect.w;
+            newVolume = newVolume < 0.0f ? 0.0f : newVolume > 1.0f ? 1.0f : newVolume;
+            setSoundEffectsVolume(resources, newVolume);
+            ui->sfxSliderKnob.x = ui->sfxSliderRect.x + (ui->sfxSliderRect.w * newVolume);
+        }
+    }
+}
 
 void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources, int* quit) {
+    // Toggle fullscreen with F11 key
+    if (game->keyState[SDL_SCANCODE_F]) {
+        static int is_fullscreen = 0;
+        is_fullscreen = !is_fullscreen;
+        
+        if (is_fullscreen) {
+            SDL_SetWindowFullscreen(resources->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        } else {
+            SDL_SetWindowFullscreen(resources->window, 0);
+        }
+        
+        // Add a small delay to prevent multiple toggles
+        SDL_Delay(200);
+    }
+
     if (game->screen == GAME) {
         int is_thrusting = 0;
 
@@ -66,10 +201,14 @@ void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources,
 
         // Update thruster animation
         updateThruster(&fighter->thruster, is_thrusting);
+    } else if (game->screen == MAIN_MENU) {
+        if (game->keyState[SDL_SCANCODE_Q]) { // A
+            game->screen = GAME;
+        }
     }
 }
 
-void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, BackgroundEffects* bg_effects) {
+void updateGameState(Game* game, Fighter* fighter, GameResources* resources, BackgroundEffects* bg_effects) {
     if (game->screen == GAME) {
         /*
         // Move bullets
@@ -77,7 +216,7 @@ void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIE
             game->bullets[i].x += 7; // Move bullet 1 pixel to the right
 
             // Remove bullets that move off-screen
-            if (game->bullets[i].x > SCREEN_WIDTH) {
+            if (game->bullets[i].x > resources->windowWidth) {
                 for (int j = i; j < game->numBullets - 1; j++) {
                     game->bullets[j] = game->bullets[j + 1];
                 }
@@ -92,13 +231,28 @@ void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIE
 
         updateSolarSystem(bg_effects);
         
-        calculateGravityForces(fighter, bg_effects, resources);
-        
-        // Update fighter rectangle
-        fighter->rect = (SDL_Rect){ fighter->x, fighter->y, FIGHTER_WIDTH, FIGHTER_HEIGHT };
+        // calculateGravityForces(fighter, bg_effects, resources);
 
-        // Update score
-        game->score++;
+        // Update background position
+        resources->bg_x += fighter->speed_x;
+        resources->bg_y += fighter->speed_y;
+
+        // Check for astral object discovery
+        if (!game->objectivesFinished) {
+            int new_discoveries = checkAstralObjectDiscovery(fighter, bg_effects, resources, game);
+            
+            if (new_discoveries > 0) {
+                // Add score or other rewards for discovery
+                game->score += new_discoveries * 100;
+                
+                if (resources->discoverySound) {
+                    playSound(resources->discoverySound, resources); // Medium volume
+                }
+            }
+            
+            // Update fighter rectangle
+            fighter->rect = (SDL_Rect){ fighter->x, fighter->y, FIGHTER_WIDTH, FIGHTER_HEIGHT };
+        }
     }
 }
 
@@ -219,6 +373,8 @@ void limitFighterSpeed(Fighter* fighter, float max_speed) {
 }
 
 void calculateGravityForces(Fighter* fighter, BackgroundEffects* bg_effects, GameResources* resources) {
+    const float G = 6.67e-11;
+    
     // Reset acceleration
     float accel_x = 0;
     float accel_y = 0;
@@ -239,11 +395,10 @@ void calculateGravityForces(Fighter* fighter, BackgroundEffects* bg_effects, Gam
         
         // sun: 4000/27.4 = 146.00
         if (distance < 146*planet->mass) {
-            const float G = 6.67e-11;
             distance = sqrtf(distance_squared + 200*200); // softening
 
             // Calculate gravitational force (F = G * m1 * m2 / r²)
-            force_magnitude = (G * planet->mass * FIGHTER_MASS) / distance_squared;
+            force_magnitude = (G * planet->mass * FIGHTER_MASS) / distance_squared /5;
             
             // Convert force to acceleration (a = F / m)
             acceleration = force_magnitude / FIGHTER_MASS;
@@ -259,8 +414,51 @@ void calculateGravityForces(Fighter* fighter, BackgroundEffects* bg_effects, Gam
     // Apply acceleration to fighter velocity
     fighter->speed_x += accel_x;
     fighter->speed_y += accel_y;
-
-    // Update background position
-    resources->bg_x += fighter->speed_x;
-    resources->bg_y += fighter->speed_y;
 }
+
+int checkAstralObjectDiscovery(Fighter* fighter, BackgroundEffects* bg_effects, GameResources* resources, Game* game) {
+    int new_discoveries = 0;
+    
+    // Fighter center in world coordinates
+    float fighter_center_x = resources->bg_x + fighter->x + fighter->rect.w / 2;
+    float fighter_center_y = resources->bg_y + fighter->y + fighter->rect.h / 2;
+    
+    for (int i = 0; i < TOTAL_ASTRAL_OBJECTS; i++) {
+        AstralObject* obj = &bg_effects->astral_objects[i];
+
+        // Skip already discovered objects
+        if (obj->discovered) continue;
+
+        int scaled_w = obj->w * obj->scale /10;
+        int scaled_h = obj->h * obj->scale /10;
+        
+        // Calculate distance between centers
+        float dx = obj->world_position.x + scaled_w/2 - fighter_center_x;
+        float dy = obj->world_position.y + scaled_h/2 - fighter_center_y;
+        float distance = sqrtf(dx * dx + dy * dy);
+        
+        // Check if fighter is close enough (within 100px)
+        if (distance < fminf(obj->w, obj->h) * obj->scale * 0.8f /10) {
+            // Mark as discovered and update scores
+            obj->discovered = 1;
+            int type = obj->texture_index;
+            
+            game->discovery.discovered_count[type]++;
+            game->discovery.total_score[type] += obj->score_value;
+            game->discovery.total_discovered++;
+            game->discovery.total_score_earned += obj->score_value;
+            game->score += obj->score_value;
+            
+            new_discoveries++;
+        }
+    }
+
+    if (game->discovery.total_discovered == TOTAL_ASTRAL_OBJECTS) {
+        if (rand()%3 < 2) playSound(resources->aceSound, resources);
+        else              playSound(resources->wowSound, resources);
+        game->objectivesFinished = 1;
+    }
+    
+    return new_discoveries;
+}
+

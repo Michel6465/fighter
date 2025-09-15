@@ -1,5 +1,6 @@
-render.o: render.c render.h init.h game.h menu.h
+render.o: render.c render.h init.h game.h menu.h sounds.h
 render.h:
 init.h:
 game.h:
 menu.h:
+sounds.h:

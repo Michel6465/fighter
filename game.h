@@ -10,35 +10,19 @@
 
 enum {TURN_LEFT, TURN_RIGHT, THRUST, DO_NOTHING};
 
-// Game states
-typedef enum {
-    MAIN_MENU,
-    GAME,
-    OPTIONS
-} GameState;
-
-// Game structure
-typedef struct {
-    GameState screen;
-    int isSound;
-    int isHard;
-    int score;
-    int shipLevel;
-    int numBullets;
-    SDL_Rect bullets[MAX_BULLETS];
-    const Uint8* keyState;
-} Game;
-
 // Function declarations
+void handleMouseInput(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, SDL_Event e, int* quit);
 void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources, int* quit);
-void updateGameState(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, BackgroundEffects* bg_effects);
-int addBullets(SDL_Rect* bullets, SDL_Rect spaceshipRect, int numBullets, int shipLevel);
+void updateGameState(Game* game, Fighter* fighter, GameResources* resources, BackgroundEffects* bg_effects);
+//int addBullets(SDL_Rect* bullets, SDL_Rect spaceshipRect, int numBullets, int shipLevel);
+void updateSolarSystem(BackgroundEffects* bg_effects);
+void updateThruster(ThrusterState* thruster, int is_thrusting);
+
 int getShortestRotationDirection(Fighter* fighter);
 float getFighterMovementDirection(Fighter* fighter);
 float getFighterMovementSpeed(Fighter* fighter);
-void updateSolarSystem(BackgroundEffects* bg_effects);
-void updateThruster(ThrusterState* thruster, int is_thrusting);
 void limitFighterSpeed(Fighter* fighter, float max_speed);
 void calculateGravityForces(Fighter* fighter, BackgroundEffects* bg_effects, GameResources* resources);
+int checkAstralObjectDiscovery(Fighter* fighter, BackgroundEffects* bg_effects, GameResources* resources, Game* game);
 
 #endif
