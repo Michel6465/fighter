@@ -19,7 +19,8 @@ void renderSolarSystem(SDL_Renderer* renderer, BackgroundEffects* bg_effects, Ga
 void renderStarfield(SDL_Renderer* renderer, BackgroundEffects* bg_effects, GameResources* resources);
 void renderAstralObjects(SDL_Renderer* renderer, BackgroundEffects* bg_effects, GameResources* resources);
 void renderDiscoveryProgress(SDL_Renderer* renderer, Game* game, GameResources* resources, UIElements* ui);
-void renderVolumeSliders(SDL_Renderer* renderer, GameResources* resources, UIElements* ui);
+void renderVolumeSliders(SDL_Renderer* renderer, GameResources* resources, Slider s, int x, int y);
+void renderMenuList(SDL_Renderer* renderer, GameResources* resources, MenuListItem* menuList, int listSize);
 
 void drawCircle(SDL_Renderer* renderer, int center_x, int center_y, int radius, SDL_Color color);
 void renderText(SDL_Renderer* renderer, TTF_Font* font, const char* text, SDL_Color color, SDL_Rect* dstRect, int centerHorizontally, int centerVertically);

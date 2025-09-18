@@ -11,8 +11,6 @@
 enum {TURN_LEFT, TURN_RIGHT, THRUST, DO_NOTHING};
 
 // Function declarations
-void handleMouseInput(Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, SDL_Event e, int* quit);
-void handleKeyboardInput(Game* game, Fighter* fighter, GameResources* resources, int* quit);
 void updateGameState(Game* game, Fighter* fighter, GameResources* resources, BackgroundEffects* bg_effects);
 //int addBullets(SDL_Rect* bullets, SDL_Rect spaceshipRect, int numBullets, int shipLevel);
 void updateSolarSystem(BackgroundEffects* bg_effects);

@@ -23,18 +23,15 @@
 #define FPS 120
 #define FRAME_DELAY 1000/FPS // Durée d'une frame en millisecondes (16ms pour 60 FPS)
 
-// Button dimensions and positions
-#define BUTTON_WIDTH 200
-#define BUTTON_HEIGHT 50
-#define BUTTON_SPACING 20
-
 #define FIGHTER_WIDTH 40
 #define FIGHTER_HEIGHT 80
 #define FIGHTER_SPEED 2
 #define FIGHTER_MAX_SPEED 20
 #define FIGHTER_MASS 10.0f
 #define MAX_BULLETS 1000
-#define PI 3.14159265f
+
+#define MENU_MARGIN_RIGHT 20
+#define MENU_OFFSET 300
 
 /* 
             FIGHTER STRUCTURES
@@ -172,11 +169,17 @@ typedef struct {
     SDL_Texture* pauseTexture;
     SDL_Texture* checkboxCheckedTexture;
     SDL_Texture* checkboxUncheckedTexture;
+    SDL_Texture* pauseTexture2;
+    SDL_Texture* checkboxCheckedTexture2;
+    SDL_Texture* checkboxUncheckedTexture2;
     SDL_Texture* checkmarkTexture;
     SDL_Texture* bulletTexture;
     SDL_Texture* starTextures[10];
     SDL_Texture* planetTextures[NUM_PLANETS];
     SDL_Texture* astralTextures[4];
+    SDL_Texture* menuBgTexture;
+    SDL_Texture* menuBackground;
+    SDL_Texture* optionsBackground;
     int num_star_textures;
     Mix_Music* music;
     Mix_Chunk* discoverySound;
@@ -189,15 +192,50 @@ typedef struct {
     TTF_Font* uiFont;
     float bg_x, bg_y;
     int windowWidth, windowHeight;
+    int isHoveringPause;
 } GameResources;
 
+enum {TYPE_BUTTON, TYPE_SLIDER, TYPE_CHECKBOX};
+
 typedef struct {
-    SDL_Rect startButtonRect;
-    SDL_Rect optionsButtonRect;
-    SDL_Rect quitButtonRect;
-    SDL_Rect checkbox1Rect;
-    SDL_Rect checkbox2Rect;
-    SDL_Rect backButtonRect;
+    SDL_Color fillColor;
+    int textJustify;
+    int textAlign;
+} Button;
+
+typedef struct {
+    SDL_Color innerColor;
+    SDL_Color borderColor;
+    SDL_Color knobColor;
+    int innerHeight;
+    float knobPosition;
+    int length;
+} Slider;
+
+typedef struct {
+    int boxSize;
+    int isChecked;
+    int textJustify;
+    int textAlign;
+} Checkbox;
+
+typedef struct {
+    Button button;
+    Slider slider;
+    Checkbox checkbox;
+    int type;
+    int w, h;
+    char* text;
+    SDL_Color textColor;
+    SDL_Color hoverColor;
+    int isHovering;
+} MenuListItem;
+
+typedef struct {
+    MenuListItem* menuButtons;
+    int nbMenuButtons;
+    MenuListItem* optionsButtons;
+    int nbOptionsButtons;
     SDL_Rect pauseButtonRect;
     SDL_Rect musicSliderRect;
     SDL_Rect musicSliderKnob;
@@ -211,7 +249,6 @@ typedef struct {
     SDL_Color white;
     SDL_Color darkBlue;
     SDL_Color blue;
-    int checkboxSize;
     int draggingMusic;
     int draggingSfx;
 } UIElements;

@@ -68,13 +68,21 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     // Load checkbox images
     SDL_Surface* checkboxCheckedSurface = IMG_Load("img/menus/checkbox_checked.png");
     SDL_Surface* checkboxUncheckedSurface = IMG_Load("img/menus/checkbox_unchecked.png");
+    SDL_Surface* checkboxCheckedSurface2 = IMG_Load("img/menus/checkbox_checked2.png");
+    SDL_Surface* checkboxUncheckedSurface2 = IMG_Load("img/menus/checkbox_unchecked2.png");
     checkInit(!checkboxCheckedSurface || !checkboxUncheckedSurface, "Failed to load checkbox images");
+    checkInit(!checkboxCheckedSurface2 || !checkboxUncheckedSurface2, "Failed to load checkbox images 2");
 
     resources->checkboxCheckedTexture = SDL_CreateTextureFromSurface(renderer, checkboxCheckedSurface);
     resources->checkboxUncheckedTexture = SDL_CreateTextureFromSurface(renderer, checkboxUncheckedSurface);
+    resources->checkboxCheckedTexture2 = SDL_CreateTextureFromSurface(renderer, checkboxCheckedSurface2);
+    resources->checkboxUncheckedTexture2 = SDL_CreateTextureFromSurface(renderer, checkboxUncheckedSurface2);
     SDL_FreeSurface(checkboxCheckedSurface);
     SDL_FreeSurface(checkboxUncheckedSurface);
+    SDL_FreeSurface(checkboxCheckedSurface2);
+    SDL_FreeSurface(checkboxUncheckedSurface2);
     checkInit(!resources->checkboxCheckedTexture || !resources->checkboxUncheckedTexture, "Failed to create checkbox textures");
+    checkInit(!resources->checkboxCheckedTexture2 || !resources->checkboxUncheckedTexture2, "Failed to create checkbox textures 2");
 
     SDL_Surface* checkmarkSurface = IMG_Load("img/menus/checkmark2.png");
     checkInit(!checkmarkSurface, "Failed to load checkmark image");
@@ -90,11 +98,17 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     checkInit(!resources->fighterTexture, "Failed to create fighter texture");
 
     // Load pause button
-    SDL_Surface* pauseSurface = IMG_Load("img/menus/pause2.png");
+    SDL_Surface* pauseSurface = IMG_Load("img/menus/pause.png");
+    SDL_Surface* pauseSurface2 = IMG_Load("img/menus/pause2.png");
     checkInit(!pauseSurface, "Failed to load pause button image");
+    checkInit(!pauseSurface2, "Failed to load pause button image 2");
     resources->pauseTexture = SDL_CreateTextureFromSurface(renderer, pauseSurface);
+    resources->pauseTexture2 = SDL_CreateTextureFromSurface(renderer, pauseSurface2);
     SDL_FreeSurface(pauseSurface);
+    SDL_FreeSurface(pauseSurface2);
     checkInit(!resources->pauseTexture, "Failed to create pause texture");
+    checkInit(!resources->pauseTexture2, "Failed to create pause texture 2");
+    resources->isHoveringPause = 0;
 
     // Load bullet image
     SDL_Surface* bulletSurface = IMG_Load("img/bullets/sprites_-_lasers_bullets_1_66v2.5/bullets_full/10.png");
@@ -148,6 +162,34 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
         SDL_FreeSurface(starSurface);
         checkInit(!resources->starTextures[i], "Failed to create star texture");
     }
+
+    // Load menu background
+    SDL_Surface* menuBgSurface = IMG_Load("img/menus/2.jpg");
+    if (!menuBgSurface) {
+        printf("Warning: Failed to load menu background image\n");
+        // Create a fallback background
+        menuBgSurface = SDL_CreateRGBSurface(0, resources->windowWidth, resources->windowHeight, 32, 0, 0, 0, 0);
+        SDL_FillRect(menuBgSurface, NULL, SDL_MapRGB(menuBgSurface->format, 30, 30, 60)); // Dark blue
+    }
+    resources->menuBackground = SDL_CreateTextureFromSurface(renderer, menuBgSurface);
+    SDL_FreeSurface(menuBgSurface);
+    
+    // Load options background
+    SDL_Surface* optionsBgSurface = IMG_Load("img/menus/3.jpg");
+    if (!optionsBgSurface) {
+        printf("Warning: Failed to load options background image\n");
+        // Create a fallback background
+        optionsBgSurface = SDL_CreateRGBSurface(0, resources->windowWidth, resources->windowHeight, 32, 0, 0, 0, 0);
+        SDL_FillRect(optionsBgSurface, NULL, SDL_MapRGB(optionsBgSurface->format, 40, 40, 80)); // Slightly lighter blue
+    }
+    resources->optionsBackground = SDL_CreateTextureFromSurface(renderer, optionsBgSurface);
+    SDL_FreeSurface(optionsBgSurface);
+
+    SDL_Surface* menuListBgSurface = IMG_Load("img/menus/menu_bg.png");
+    checkInit(!menuListBgSurface, "Failed to load menu list bg image");
+    resources->menuBgTexture = SDL_CreateTextureFromSurface(renderer, menuListBgSurface);
+    SDL_FreeSurface(menuListBgSurface);
+    checkInit(!resources->menuBgTexture, "Failed to create menu list bg texture");
 
     // Load planet textures
     const char* planetPaths[NUM_PLANETS] = {
@@ -218,7 +260,7 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     // Load music
     resources->music = Mix_LoadMUS("music/pinball-theme.mp3");
     checkInitMix(resources->music == NULL, "Failed to load music");
-    //checkInitMix(Mix_PlayMusic(resources->music, -1) == -1, "Failed to play music");
+    checkInitMix(Mix_PlayMusic(resources->music, -1) == -1, "Failed to play music");
 
     // Load sound effects
     resources->discoverySound = Mix_LoadWAV("music/effects/ting.wav");
@@ -229,9 +271,9 @@ void initGameResources(SDL_Renderer* renderer, GameResources* resources) {
     if (!resources->aceSound) printf("Warning: Failed to load ace sound: %s\n", Mix_GetError());
     
     // Initialize fonts
-    resources->uiFont = initFont("sft.ttf", 20);
-    resources->font = initFont("sft.ttf", 28);
-    resources->titleFont = initFont("sft.ttf", 48);
+    resources->uiFont = initFont("fonts/sft.ttf", 20);
+    resources->font = initFont("fonts/sft.ttf", 40);
+    resources->titleFont = initFont("fonts/sft.ttf", 48);
 
     // Initialize background position
     resources->bg_x = 0;
@@ -242,58 +284,140 @@ void initUIElements(UIElements* ui, SDL_Window* window) {
     int screenWidth, screenHeight;
     SDL_GetWindowSize(window, &screenWidth, &screenHeight);
 
-    int startButtonX = (screenWidth - BUTTON_WIDTH) / 2;
-    int startButtonY = screenHeight / 2 - (BUTTON_HEIGHT + screenHeight/50) * 1.5;
-
-    int optionsButtonX = (screenWidth - BUTTON_WIDTH) / 2;
-    int optionsButtonY = screenHeight / 2 - BUTTON_HEIGHT / 2;
-
-    int quitButtonX = (screenWidth - BUTTON_WIDTH) / 2;
-    int quitButtonY = screenHeight / 2 + (BUTTON_HEIGHT + screenHeight/50) / 2;
-
-    int backButtonX = (screenWidth - BUTTON_WIDTH) / 2;
-    int backButtonY = 300;
-
-    int checkboxX = 150;
-    int checkboxY1 = 150;
-    int checkboxY2 = 200;
-    ui->checkboxSize = 50;
-
-    // Title text dimensions
-    ui->titleRect = (SDL_Rect){ (screenWidth - 400) / 2, 30, 400, 60 };
-
-    // Button rectangles
-    ui->startButtonRect = (SDL_Rect){ startButtonX, startButtonY, BUTTON_WIDTH, BUTTON_HEIGHT };
-    ui->optionsButtonRect = (SDL_Rect){ optionsButtonX, optionsButtonY, BUTTON_WIDTH, BUTTON_HEIGHT };
-    ui->quitButtonRect = (SDL_Rect){ quitButtonX, quitButtonY, BUTTON_WIDTH, BUTTON_HEIGHT };
-
-    // Options screen elements
-    ui->checkbox1Rect = (SDL_Rect){ checkboxX, checkboxY1, ui->checkboxSize, ui->checkboxSize };
-    ui->checkbox2Rect = (SDL_Rect){ checkboxX, checkboxY2, ui->checkboxSize, ui->checkboxSize };
-    ui->backButtonRect = (SDL_Rect){ backButtonX, backButtonY, BUTTON_WIDTH, BUTTON_HEIGHT };
-
-    // Volume sliders
-    ui->musicSliderRect = (SDL_Rect){350, 300, 200, 20};
-    ui->sfxSliderRect = (SDL_Rect){350, 350, 200, 20};
+    // GENERAL
+    ui->nbMenuButtons = 3;
+    ui->nbOptionsButtons = 4;
+    ui->menuButtons = malloc(ui->nbMenuButtons * sizeof(MenuListItem));
+    ui->optionsButtons = malloc(ui->nbOptionsButtons * sizeof(MenuListItem));
     
-    // Initial knob positions (based on default volumes)
-    ui->musicSliderKnob = (SDL_Rect){350 + 100, 295, 10, 30}; // 30% position
-    ui->sfxSliderKnob = (SDL_Rect){350 + 100, 345, 10, 30};  // 80% position
-    
-    ui->musicTextRect = (SDL_Rect){250, 295, 90, 30};
-    ui->sfxTextRect = (SDL_Rect){250, 345, 90, 30};
-
-    ui->draggingMusic = 0;
-    ui->draggingSfx = 0;
-
-    // Game screen elements
-    ui->pauseButtonRect = (SDL_Rect){ screenWidth - 50 - 10, 10, 50, 50 };
-    ui->scoreRect = (SDL_Rect){ 10, 10, 200, 50 };
+    const int BUTTON_WIDTH = 200;
+    const int BUTTON_HEIGHT = 60;
 
     ui->yellow = (SDL_Color){ 255, 230, 0, 0 };
     ui->white = (SDL_Color){ 255, 255, 255, 0 };
     ui->darkBlue = (SDL_Color){ 26, 28, 58, 0 };
     ui->blue = (SDL_Color){ 39, 44, 92, 0 };
+
+    // Title text dimensions
+    ui->titleRect = (SDL_Rect){ (screenWidth - 400) / 2, 30, 400, 60 };
+
+    // MAIN MENU UI
+    char* names[3] = {"Start", "Options", "Quit"};
+    for (int i=0; i<3; i++) {
+        Button b = {
+            .fillColor = ui->darkBlue,
+            .textJustify = 1,
+            .textAlign = 1
+        };
+
+        ui->menuButtons[i] = (MenuListItem) {
+            .button = b,
+            .slider = {{' '}},
+            .checkbox = {0},
+            .type = TYPE_BUTTON,
+            .text = strdup(names[i]),
+            .textColor = ui->yellow,
+            .hoverColor = ui->white,
+            .w = BUTTON_WIDTH,
+            .h = BUTTON_HEIGHT,
+            .isHovering = 0
+        };
+    }
+
+    // OPTIONS MENU UI
+    // sliders to MenuListItem struct
+    Slider s = {
+        .innerColor = ui->darkBlue,
+        .borderColor = ui->darkBlue,
+        .knobColor = ui->white,
+        .borderColor = ui->darkBlue,
+        .knobPosition = 0.5f,
+        .length = BUTTON_WIDTH+100,
+        .innerHeight = 40
+    };
+
+    ui->optionsButtons[0] = (MenuListItem) {
+        .button = {{0}},
+        .slider = s,
+        .checkbox = {0},
+        .type = TYPE_SLIDER,
+        .text = strdup("Music"),
+        .textColor = ui->yellow,
+        .hoverColor = ui->white,
+        .w = MENU_OFFSET+s.length+200, // text + slider + %
+        .h = BUTTON_HEIGHT,
+        .isHovering = 0
+    };
+
+    Slider s2 = {
+        .innerColor = ui->darkBlue,
+        .borderColor = ui->darkBlue,
+        .knobColor = ui->white,
+        .borderColor = ui->darkBlue,
+        .knobPosition = 0.5f,
+        .length = BUTTON_WIDTH+100,
+        .innerHeight = 40
+    };
+
+    ui->optionsButtons[1] = (MenuListItem) {
+        .button = {{0}},
+        .slider = s2,
+        .checkbox = {0},
+        .type = TYPE_SLIDER,
+        .text = strdup("Sound FX"),
+        .textColor = ui->yellow,
+        .hoverColor = ui->white,
+        .w = MENU_OFFSET+s2.length+200,
+        .h = BUTTON_HEIGHT,
+        .isHovering = 0
+    };
+
+    Checkbox c = {
+        .boxSize = 100,
+        .isChecked = 0,
+        .textJustify = 1,
+        .textAlign = 1
+    };
+
+    ui->optionsButtons[2] = (MenuListItem) {
+        .button = {{0}},
+        .slider = {{' '}},
+        .checkbox = c,
+        .type = TYPE_CHECKBOX,
+        .text = strdup("Hard mode"),
+        .textColor = ui->yellow,
+        .hoverColor = ui->white,
+        .w = MENU_OFFSET+100, // text + box
+        .h = BUTTON_HEIGHT,
+        .isHovering = 0
+    };
+
+    Button b = {
+        .fillColor = ui->darkBlue,
+        .textJustify = 1,
+        .textAlign = 1
+    };
+
+    ui->optionsButtons[3] = (MenuListItem) {
+        .button = b,
+        .slider = {{' '}},
+        .checkbox = {0},
+        .type = TYPE_BUTTON,
+        .text = strdup("Back"),
+        .textColor = ui->yellow,
+        .hoverColor = ui->white,
+        .w = BUTTON_WIDTH,
+        .h = BUTTON_HEIGHT,
+        .isHovering = 0
+    };
+
+    // GAME UI
+    ui->draggingMusic = 0;
+    ui->draggingSfx = 0;
+
+    // Game screen elements
+    ui->pauseButtonRect = (SDL_Rect){ screenWidth - 50 - MENU_MARGIN_RIGHT, 10, 50, 50 };
+    ui->scoreRect = (SDL_Rect){ MENU_MARGIN_RIGHT, 10, MENU_OFFSET, 50 };
 }
 
 void initGame(Game* game) {
@@ -485,9 +609,23 @@ void cleanupResources(GameResources* resources) {
     if (resources->checkboxCheckedTexture) SDL_DestroyTexture(resources->checkboxCheckedTexture);
     if (resources->checkboxUncheckedTexture) SDL_DestroyTexture(resources->checkboxUncheckedTexture);
     if (resources->bulletTexture) SDL_DestroyTexture(resources->bulletTexture);
+    if (resources->checkmarkTexture) SDL_DestroyTexture(resources->checkmarkTexture);
+    if (resources->fighterTexture) SDL_DestroyTexture(resources->fighterTexture);
+    if (resources->menuBackground) SDL_DestroyTexture(resources->menuBackground);
+    if (resources->optionsBackground) SDL_DestroyTexture(resources->optionsBackground);
+
     if (resources->music) Mix_FreeMusic(resources->music);
+    if (resources->discoverySound) Mix_FreeChunk(resources->discoverySound);
+    if (resources->wowSound) Mix_FreeChunk(resources->wowSound);
+    if (resources->aceSound) Mix_FreeChunk(resources->aceSound);
     if (resources->uiFont) TTF_CloseFont(resources->uiFont);
-    //if (resources->titleFont) TTF_CloseFont(resources->titleFont); // segfault maybe because the first closefont closes all the sizes at the same time
+
+    int i;
+    for (i=0; i<4; i++) SDL_DestroyTexture(resources->thrusterTextures[i]);
+    for (i=0; i<10; i++) SDL_DestroyTexture(resources->starTextures[i]);
+    for (i=0; i<NUM_PLANETS; i++) SDL_DestroyTexture(resources->planetTextures[i]);
+    for (i=0; i<4; i++) SDL_DestroyTexture(resources->astralTextures[i]);
+    
     
     Mix_CloseAudio();
     TTF_Quit();

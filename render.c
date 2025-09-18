@@ -6,58 +6,71 @@
 #include <stdio.h>
 
 void renderMainMenu(SDL_Renderer* renderer, GameResources* resources, UIElements* ui) {
-    // Render title
+    // Render background
+    if (resources->menuBackground) {
+        SDL_Rect bgRect = {0, 0, resources->windowWidth, resources->windowHeight};
+        SDL_RenderCopy(renderer, resources->menuBackground, NULL, &bgRect);
+    }
+
+    // Semi-transparent overlay
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128);
+    SDL_Rect overlay = {50, 50, resources->windowWidth - 100, resources->windowHeight - 100};
+    SDL_RenderFillRect(renderer, &overlay);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+    // Particles (optional - keep if you want them)
+    Uint32 frameTime = SDL_GetTicks();
+    for (int i = 0; i < 50; i++) {
+        float x = sin(frameTime * 0.001f + i * 0.2f) * resources->windowWidth * 0.4f + resources->windowWidth / 2;
+        float y = cos(frameTime * 0.0008f + i * 0.3f) * resources->windowHeight * 0.4f + resources->windowHeight / 2;
+        float size = 2.0f + sin(frameTime * 0.002f + i) * 1.5f;
+        
+        SDL_SetRenderDrawColor(renderer, 100 + sin(i * 0.5f) * 100, 100 + cos(i * 0.7f) * 100, 200, 100);
+        SDL_Rect particle = {x - size/2, y - size/2, size, size};
+        SDL_RenderFillRect(renderer, &particle);
+    }
+
+    // Render title (top center)
     renderText(renderer, resources->titleFont, "Fight game", ui->yellow, &ui->titleRect, 1, 1);
 
-    // Render buttons
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a);
-    SDL_RenderFillRect(renderer, &ui->startButtonRect);
-    SDL_RenderFillRect(renderer, &ui->optionsButtonRect);
-    SDL_RenderFillRect(renderer, &ui->quitButtonRect);
-
-    // Render game_button borders
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a); // Black border
-    SDL_RenderDrawRect(renderer, &ui->startButtonRect);
-    SDL_RenderDrawRect(renderer, &ui->optionsButtonRect);
-    SDL_RenderDrawRect(renderer, &ui->quitButtonRect);
-
-    // Render button texts
-    SDL_Rect startTextRect = { ui->startButtonRect.x + 10, ui->startButtonRect.y + 10, ui->startButtonRect.w - 20, ui->startButtonRect.h - 20 };
-    SDL_Rect optionsTextRect = { ui->optionsButtonRect.x + 10, ui->optionsButtonRect.y + 10, ui->optionsButtonRect.w - 20, ui->optionsButtonRect.h - 20 };
-    SDL_Rect quitTextRect = { ui->quitButtonRect.x + 10, ui->quitButtonRect.y + 10, ui->quitButtonRect.w - 20, ui->quitButtonRect.h - 20 };
-    renderText(renderer, resources->font, "Start", ui->yellow, &startTextRect, 1, 1);
-    renderText(renderer, resources->font, "Options", ui->yellow, &optionsTextRect, 1, 1);
-    renderText(renderer, resources->font, "Quit", ui->yellow, &quitTextRect, 1, 1);
+    renderMenuList(renderer, resources, ui->menuButtons, ui->nbMenuButtons);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }
 
 void renderOptionsScreen(SDL_Renderer* renderer, Game* game, GameResources* resources, UIElements* ui) {
+    if (resources->optionsBackground) {
+        SDL_Rect bgRect = {0, 0, resources->windowWidth, resources->windowHeight};
+        SDL_RenderCopy(renderer, resources->optionsBackground, NULL, &bgRect);
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 128); // Semi-transparent black
+    SDL_Rect overlay = {50, 50, resources->windowWidth - 100, resources->windowHeight - 100};
+    SDL_RenderFillRect(renderer, &overlay);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+
+    Uint32 frameTime = SDL_GetTicks();
+    
+    for (int i = 0; i < 50; i++) {
+        float x = sin(frameTime * 0.001f + i * 0.2f) * resources->windowWidth * 0.4f + resources->windowWidth / 2;
+        float y = cos(frameTime * 0.0008f + i * 0.3f) * resources->windowHeight * 0.4f + resources->windowHeight / 2;
+        float size = 2.0f + sin(frameTime * 0.002f + i) * 1.5f;
+        
+        SDL_SetRenderDrawColor(renderer, 
+                             100 + sin(i * 0.5f) * 100, 
+                             100 + cos(i * 0.7f) * 100, 
+                             200, 
+                             100);
+        SDL_Rect particle = {x - size/2, y - size/2, size, size};
+        SDL_RenderFillRect(renderer, &particle);
+    }
+
     // Render title
     renderText(renderer, resources->titleFont, "Options", ui->yellow, &ui->titleRect, 1, 1);
 
-    if (game->isSound) SDL_RenderCopy(renderer, resources->checkboxCheckedTexture, NULL, &ui->checkbox1Rect);
-    else SDL_RenderCopy(renderer, resources->checkboxUncheckedTexture, NULL, &ui->checkbox1Rect);
-
-    if (game->isHard) SDL_RenderCopy(renderer, resources->checkboxCheckedTexture, NULL, &ui->checkbox2Rect);
-    else SDL_RenderCopy(renderer, resources->checkboxUncheckedTexture, NULL, &ui->checkbox2Rect);
-
-    // Render back button
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a); // Same color as other buttons
-    SDL_RenderFillRect(renderer, &ui->backButtonRect);
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a); // Black border
-    SDL_RenderDrawRect(renderer, &ui->backButtonRect);
-
-    // Render texts
-    SDL_Rect checkbox1TextRect = { ui->checkbox1Rect.x + ui->checkboxSize + 10, ui->checkbox1Rect.y, BUTTON_WIDTH, ui->checkboxSize };
-    SDL_Rect checkbox2TextRect = { ui->checkbox2Rect.x + ui->checkboxSize + 10, ui->checkbox2Rect.y, BUTTON_WIDTH, ui->checkboxSize };
-    SDL_Rect backTextRect = { ui->backButtonRect.x + 10, ui->backButtonRect.y + 10, ui->backButtonRect.w - 20, ui->backButtonRect.h - 20 };
-    renderText(renderer, resources->font, "Sound", ui->yellow, &checkbox1TextRect, 1, 1);
-    renderText(renderer, resources->font, "Hardcore", ui->yellow, &checkbox2TextRect, 1, 1);
-    renderText(renderer, resources->font, "Back", ui->yellow, &backTextRect, 1, 1);
-
-    // Render volume sliders
-    renderVolumeSliders(renderer, resources, ui);
+    renderMenuList(renderer, resources, ui->optionsButtons, ui->nbOptionsButtons);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }
@@ -89,8 +102,8 @@ void renderGameplay(SDL_Renderer* renderer, Game* game, Fighter* fighter, GameRe
     renderDiscoveryProgress(renderer, game, resources, ui);
     renderText(renderer, resources->font, scoreText, ui->yellow, &ui->scoreRect, 0, 0);
     
-    // Pause and spaceship
-    SDL_RenderCopy(renderer, resources->pauseTexture, NULL, &ui->pauseButtonRect);
+    // Pause
+    SDL_RenderCopy(renderer, resources->isHoveringPause?resources->pauseTexture:resources->pauseTexture2, NULL, &ui->pauseButtonRect);
 }
 
 void renderGameScreen(SDL_Renderer* renderer, Game* game, Fighter* fighter, GameResources* resources, UIElements* ui, BackgroundEffects* bg_effects) {
@@ -377,7 +390,7 @@ void renderDiscoveryProgress(SDL_Renderer* renderer, Game* game, GameResources* 
     renderText(renderer, resources->uiFont, discovery_text, ui->white, &(SDL_Rect) {0, 85, 240, 30}, 0, 0);
 
     sprintf(discovery_text, "%d", game->discovery.total_discovered);
-    shift = floorf(game->discovery.total_discovered/10)==1 ? -13 : 0;
+    shift = floorf(game->discovery.total_discovered/MENU_MARGIN_RIGHT)==1 ? -13 : 0;
     renderText(renderer, resources->uiFont, discovery_text, ui->white, &(SDL_Rect) {165 + shift, 85, 240, 30}, 0, 0);
 
     sprintf(discovery_text, "/%d", TOTAL_ASTRAL_OBJECTS);
@@ -402,63 +415,6 @@ void renderDiscoveryProgress(SDL_Renderer* renderer, Game* game, GameResources* 
         sprintf(discovery_text, "(%d)", type_scores[i]);
         renderText(renderer, resources->uiFont, discovery_text, ui->white, &(SDL_Rect) {220, 150 + i * 30, 40, 30}, 0, 0);
     }
-}
-
-void renderVolumeSliders(SDL_Renderer* renderer, GameResources* resources, UIElements* ui) {
-    // Music slider
-    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
-    SDL_RenderFillRect(renderer, &ui->musicSliderRect);
-    
-    // Filled portion of music slider
-    SDL_Rect musicFilled = {
-        ui->musicSliderRect.x,
-        ui->musicSliderRect.y,
-        (int)(ui->musicSliderRect.w * resources->musicVolume),
-        ui->musicSliderRect.h
-    };
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a);
-    SDL_RenderFillRect(renderer, &musicFilled);
-    
-    // SFX slider
-    SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
-    SDL_RenderFillRect(renderer, &ui->sfxSliderRect);
-    
-    // Filled portion of SFX slider
-    SDL_Rect sfxFilled = {
-        ui->sfxSliderRect.x,
-        ui->sfxSliderRect.y,
-        (int)(ui->sfxSliderRect.w * resources->soundEffectsVolume),
-        ui->sfxSliderRect.h
-    };
-    SDL_SetRenderDrawColor(renderer, ui->darkBlue.r, ui->darkBlue.g, ui->darkBlue.b, ui->darkBlue.a);
-    SDL_RenderFillRect(renderer, &sfxFilled);
-    
-    // Add outlines
-    SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
-    SDL_RenderDrawRect(renderer, &ui->musicSliderRect);
-    SDL_RenderDrawRect(renderer, &ui->sfxSliderRect);
-
-    // Render knobs
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &ui->musicSliderKnob);
-    SDL_RenderFillRect(renderer, &ui->sfxSliderKnob);
-    
-    // Render slider labels
-    renderText(renderer, resources->font, "Music:", ui->yellow, &ui->musicTextRect, 0, 1);
-    renderText(renderer, resources->font, "SFX:", ui->yellow, &ui->sfxTextRect, 0, 1);
-    
-    // Render volume percentages
-    char musicPercent[10], sfxPercent[10];
-    sprintf(musicPercent, "%.0f%%", resources->musicVolume * 100);
-    sprintf(sfxPercent, "%.0f%%", resources->soundEffectsVolume * 100);
-    
-    SDL_Rect musicPercentRect = {ui->musicSliderRect.x + ui->musicSliderRect.w + 10, ui->musicSliderRect.y, 40, 20};
-    SDL_Rect sfxPercentRect = {ui->sfxSliderRect.x + ui->sfxSliderRect.w + 10, ui->sfxSliderRect.y, 40, 20};
-    
-    renderText(renderer, resources->font, musicPercent, ui->yellow, &musicPercentRect, 0, 1);
-    renderText(renderer, resources->font, sfxPercent, ui->yellow, &sfxPercentRect, 0, 1);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }
 
 void drawCircle(SDL_Renderer* renderer, int center_x, int center_y, int radius, SDL_Color color) {
@@ -512,4 +468,77 @@ void renderText(SDL_Renderer* renderer, TTF_Font* font, const char* text, SDL_Co
     SDL_RenderCopy(renderer, textTexture, NULL, &renderRect);
     SDL_DestroyTexture(textTexture);
     SDL_FreeSurface(textSurface);
+}
+
+void renderMenuList(SDL_Renderer* renderer, GameResources* resources, MenuListItem* menuList, int listSize) {
+    int lineHeight = 80;
+    int currentYPosition = resources->windowHeight - lineHeight - MENU_MARGIN_RIGHT;
+    Button b;
+    Checkbox c;
+    Slider s;
+    int x, y;
+    
+    for (int i=listSize-1; i>=0; i--) {
+        MenuListItem item = menuList[i];
+        SDL_Color color = item.isHovering ? item.hoverColor : item.textColor;
+
+        switch (item.type) {
+            case TYPE_BUTTON:
+                b = item.button;
+                // SDL_SetRenderDrawColor(renderer, b.fillColor.r, b.fillColor.g, b.fillColor.b, 255);
+                // SDL_RenderFillRect(renderer, &(SDL_Rect) {MENU_MARGIN_RIGHT, currentYPosition, item.w, item.h});
+                SDL_RenderCopy(renderer, resources->menuBgTexture, NULL, &(SDL_Rect){MENU_MARGIN_RIGHT, currentYPosition, item.w, item.h});
+                renderText(renderer, resources->font, item.text, color, &(SDL_Rect) {MENU_MARGIN_RIGHT+5, currentYPosition+5, item.w-5, item.h-5}, 1, 1);
+                break;
+            
+            case TYPE_CHECKBOX:
+                printf("%d\n", item.isHovering);
+                c = item.checkbox;
+                SDL_Texture* check = c.isChecked ?
+                        (item.isHovering ? resources->checkboxCheckedTexture : resources->checkboxCheckedTexture2) :
+                        (item.isHovering ? resources->checkboxUncheckedTexture : resources->checkboxUncheckedTexture2);
+                SDL_RenderCopy(renderer, check, NULL, &(SDL_Rect){MENU_MARGIN_RIGHT+300, currentYPosition, min(item.h, c.boxSize), min(item.h, c.boxSize)});
+                renderText(renderer, resources->font, item.text, color, &(SDL_Rect) {MENU_MARGIN_RIGHT, currentYPosition+5, item.w-c.boxSize-5, item.h-5}, 0, 1);
+                break;
+            
+            case TYPE_SLIDER:
+                x = MENU_MARGIN_RIGHT;
+                y = currentYPosition;
+                s = item.slider;
+
+                // Render slider labels
+                renderText(renderer, resources->font, item.text, color, &(SDL_Rect){x, y, MENU_OFFSET, item.h}, 0, 1);
+
+                // Music slider
+                SDL_SetRenderDrawColor(renderer, 80, 80, 80, 255);
+                SDL_RenderFillRect(renderer, &(SDL_Rect){x+MENU_OFFSET, y, s.length, s.innerHeight});
+                
+                // Filled portion of music slider
+                SDL_Rect sliderRect = {x+MENU_OFFSET, y, (int)(s.length * s.knobPosition), s.innerHeight};
+                float p = s.knobPosition*100;
+                SDL_SetRenderDrawColor(renderer, (int)s.innerColor.r+p, (int)s.innerColor.g+p, (int)s.innerColor.b+2*p, s.innerColor.a);
+                SDL_RenderFillRect(renderer, &sliderRect);
+                
+                // Add outlines
+                SDL_SetRenderDrawColor(renderer, s.borderColor.r, s.borderColor.g, s.borderColor.b, s.borderColor.a);
+                SDL_RenderDrawRect(renderer, &sliderRect);
+
+                // Render knobs
+                SDL_SetRenderDrawColor(renderer, s.knobColor.r, s.knobColor.g, s.knobColor.b, s.knobColor.a);
+                SDL_RenderFillRect(renderer, &(SDL_Rect){x+MENU_OFFSET + (int)(s.length * s.knobPosition) - 5, y-2, 10, s.innerHeight+4});
+                
+                // Render volume percentages
+                char musicPercent[10];
+                sprintf(musicPercent, "%.0f%%", s.knobPosition * 100);
+                SDL_Rect musicPercentRect = {x + MENU_OFFSET + s.length, y, 40, 20};
+                renderText(renderer, resources->font, musicPercent, color, &musicPercentRect, 0, 1);
+                break;
+            default:
+                break;
+        }
+
+        currentYPosition -= lineHeight;
+    }
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 }

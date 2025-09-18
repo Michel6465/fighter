@@ -12,7 +12,7 @@ SDL2_CFLAGS = $(shell sdl2-config --cflags)
 SDL2_LDFLAGS = $(shell sdl2-config --libs) -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 
 # Target executable
-TARGET = a.out
+TARGET = program.out
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 DEP = $(SRCS:.c=.d)
@@ -35,6 +35,6 @@ start:
 
 # Clean up generated files
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(DEP) $(TARGET)
 
 .PHONY: all clean
